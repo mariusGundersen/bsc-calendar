@@ -11,171 +11,86 @@
       border-collapse: collapse;
       table-layout: fixed;
       text-align: center;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .day {
       text-align: center;
       font-size: 1.25em;
-      border-left: 1px solid #aaa;
-      border-right: 1px solid #aaa;
-      padding: 1em;
+      border-left: 2px solid #666;
+      border-right: 2px solid #666;
+      padding: 1em 0;
     }
     .sal {
       font-weight: bold;
       text-align: center;
-      border-bottom: 1px solid #aaa;
-      width: 150px;
+      border-bottom: 2px solid #666;
     }
 
     .sal.first {
-      border-left: 1px solid #aaa;
+      border-left: 2px solid #666;
     }
 
     .sal.last {
-      border-right: 1px solid #aaa;
+      border-right: 2px solid #666;
     }
 
     .time {
-      border-top: 1px solid #aaa;
+      vertical-align: top;
+      word-break: keep-all;
     }
 
     .time:first-child {
-      border-right: 1px solid #aaa;
+      border-right: 2px solid #666;
     }
 
     .time:last-child {
-      border-left: 1px solid #aaa;
+      border-left: 2px solid #666;
     }
 
     .lindy {
-      border: 1px solid #aaa;
+      border: 2px solid #666;
       background: #d8a234;
       color: white;
     }
     .balboa {
-      border: 1px solid #aaa;
+      border: 2px solid #666;
       background: #558c89;
       color: white;
     }
     .boogie {
-      border: 1px solid #aaa;
+      border: 2px solid #666;
       background: #986828;
       color: white;
     }
     .jazz {
-      border: 1px solid #aaa;
+      border: 2px solid #666;
       background: #ffd98a;
       color: #333;
+    }
+    .shag {
+      border: 2px solid #666;
+      background: #57bb8a;
+      color: white;
+    }
+    .blues {
+      border: 2px solid #666;
+      background: #076571;
+      color: white;
+    }
+    .felles {
+      border: 2px solid #666;
+      background: #cc6699;
+      color: white;
+    }
+    .hour {
+      border-top: 2px solid #ccc;
     }
   </style>
 </head>
 <body>
-  <table id="ukeplan">
-    <tr>
-      <td><!-- time --></td>
-      <td colspan="2" class="day">Mandag</td>
-      <td colspan="2" class="day">Tirsdag</td>
-      <td colspan="2" class="day">Onsdag</td>
-      <td colspan="2" class="day">Torsdag</td>
-      <td><!-- time --></td>
-    </tr>
-    <tr>
-      <td><!-- time --></td>
-      <td class="sal first">Sal 3</td>
-      <td class="sal last">Sal 5</td>
-      <td class="sal first">Sal 3</td>
-      <td class="sal last">Sal 5</td>
-      <td class="sal first">Sal 3</td>
-      <td class="sal last">Sal 5</td>
-      <td class="sal first">Sal 3</td>
-      <td class="sal last">Sal 5</td>
-      <td><!-- time --></td>
-    </tr>
-    <tr>
-      <td rowspan="1" class="time">19:00</td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="6" class="lindy">Lindy 1</td>
-      <td rowspan="6" class="balboa">Balboa Egentrening</td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="6" class="jazz">Jazz 4/Jazz 2</td>
-      <td rowspan="6" class="boogie">Boogie 4</td>
-      <td rowspan="6" class="boogie">Boogie 3</td>
-      <td rowspan="1" class="time">19:00</td>
-    </tr>
-    <tr>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-    </tr>
-    <tr>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-    </tr>
-    <tr>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-    </tr>
-    <tr>
-      <td rowspan="4" class="time">20:00</td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="time">20:00</td>
-    </tr>
-    <tr></tr>
-    <tr></tr>
-    <tr></tr>
-    <tr>
-      <td rowspan="4" class="time">21:00</td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="time">21:00</td>
-    </tr>
-    <tr></tr>
-    <tr></tr>
-    <tr></tr>
-    <tr>
-      <td rowspan="1" class="time">22:00</td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="4" class="empty"></td>
-      <td rowspan="1" class="time">22:00</td>
-    </tr>
-  </table>
-  <script>
-    const weekplan = {
-      "mandag": {
-        "Sal 3": [
-          {
-            title: "Balboa 2",
-            class: "balboa",
-            start: 4,
-            length: 6
-          },
-          {
-            title: "Balboa Sosialdans",
-            class: "balboa",
-            start: 0,
-            length: 2
-          }
-        ],
-        "Sal 5": [
-
-        ]
-      }
-    }
-
-
-  </script>
+  <div id="input"></div>
+  <table id="ukeplan"></table>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
