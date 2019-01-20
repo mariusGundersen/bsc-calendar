@@ -1,5 +1,10 @@
-import {$, classes} from './lib.js';
-import {time, emptyTime} from './components.js';
+import {$, classes, groupBy} from './lib.js';
+import {
+  time,
+  emptyTime,
+  renderDays,
+  renderRooms
+} from './components.js';
 import {render, html, svg} from 'https://unpkg.com/lighterhtml?module'
 
 const weekplan = {
@@ -178,36 +183,24 @@ const weekplan = {
   }
 };
 
-const table = document.querySelector("#ukeplan");
+const input = document.querySelector('#input');
 
-const days = Object.entries(weekplan)
-  .map(([day, rooms]) => ({
-    day,
-    rooms: Object.entries(rooms).map(([name, plan]) => ({name, plan}))
-  }))
-  .filter(({rooms}) => rooms.length > 0);
-
-const calculateWidth = days => 1 / days.map(d => d.rooms.length).reduce((a, b) => a + b, 0) * 100;
-
-const renderDay = ({ day, rooms }) => html`<td colspan=${rooms.length} class="day">${day}</td>`;
-
-const renderRoom = width => (room, i, e) => html`
-  <td
-    class=${`sal ${i === 0 ? 'first' : ''} ${i === e.length - 1 ? 'last' : ''}`}
-    style=${{width: width+'%'}}>
-      ${room.name}
-  </td>
-`;
-
+let agering = false;
 const agera = action => (...args) => {
   action(...args);
-  renderAll();
+  if(!agering){
+    agering = true;
+    requestAnimationFrame(() => {
+      agering = false;
+      renderAll();
+    });
+  }
 }
 
 const renderLesson = (lesson, index) => html`
   <div>
-    <label>Navn: <input oninput=${agera(e => lesson.name = e.target.value)} /></label>
-    <select onchange=${agera(e => lesson.type = e.target.value)}>
+    <label>Navn: <input value=${lesson.name} oninput=${agera(e => lesson.name = e.target.value)} /></label>
+    <select value=${lesson.type} onchange=${agera(e => lesson.type = e.target.value)}>
       <option value="lindy">Lindy</option>
       <option value="balboa">Balboa</option>
       <option value="boogie">Boogie</option>
@@ -216,8 +209,19 @@ const renderLesson = (lesson, index) => html`
       <option value="blues">Blues</option>
       <option value="felles">Felles</option>
     </select>
-    <label>Start: <input type="time" oninput=${agera(e => lesson.start = e.target.value)} /></label>
-    <label>End: <input type="time" oninput=${agera(e => lesson.end = e.target.value)}/></label>
+    <select value=${lesson.day} onchange=${agera(e => lesson.day = e.target.value)}>
+      <option value="Mandag">Mandag</option>
+      <option value="Tirsdag">Tirsdag</option>
+      <option value="Onsdag">Onsdag</option>
+      <option value="Torsdag">Torsdag</option>
+      <option value="Fredag">Fredag</option>
+      <option value="Lørdag">Lørdag</option>
+      <option value="Søndag">Søndag</option>
+    </select>
+    <label>Sal: <input value=${lesson.room} oninput=${agera(e => lesson.room = e.target.value)} /></label>
+    <label>Start: <input type="time" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></label>
+    <label>End: <input type="time" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></label>
+    <span onclick=${agera(() => lessons.splice(index, 1))}>X</span>
   </div>
 `;
 
@@ -225,52 +229,75 @@ const lessons = [];
 const hours = [];
 
 for(var i=19*4; i<19*4+3*4+1; i++){
-  hours.push(i);
+  hours.push(`${(i/4)|0}:${String((i%4)*15).padStart(2, '0')}`);
 }
 
-const addLesson = agera(() => lessons.push({}));
+const addLesson = agera(() => lessons.push({
+  name: '',
+  type: 'felles',
+  room: 'Sal 1',
+  day: 'Mandag',
+  start: '19:00',
+  end: '20:30'
+}));
 
 const renderInput = () => render(input, () => html`
   ${lessons.map(renderLesson)}
   <button onclick=${addLesson}>Add</button>
 `);
 
-const renderOutput = () => render(table, () => html`
-  <tr>
-    <td>\xa0</td>
-    ${days.map(renderDay)}
-    <td>\xa0</td>
-  </tr>
-  <tr>
-    <td class="sal">\xa0</td>
-    ${days.flatMap(day => day.rooms.map(renderRoom(calculateWidth(days))))}
-    <td class="sal">\xa0</td>
-  </tr>
-  ${hours.map(i => html`
-    <tr class=${i-19*4}>
-      ${time(i)}
-      ${days
-        .flatMap(day => day.rooms)
-        .map(room => {
-          const lesson = room.plan.find(x => x.start == i-19*4);
-          if(lesson){
-            return html`<td class=${lesson.class} rowspan=${lesson.length}>${lesson.title}</td>`;
-          }else if(room.plan.find(x => x.start < i-19*4 && x.start+x.length > i-19*4)){
-            //do nothing, there is something filling this room
-          }else{
-            return html`<td class=${i%4 == 0 ? 'empty hour' : 'empty'}>\xa0</td>`;
-          }
-        })
-        .filter(x => x)
-      }
-      ${time(i)}
-    </tr>
-  `)}
-`);
+const table = document.querySelector("#ukeplan");
+
+const renderOutput = () => {
+
+  const days = groupBy(lessons, l => l.day)
+    .map(([name, lessons]) => ({
+      name,
+      rooms: groupBy(lessons, l => l.room)
+        .map(([name, plan]) => ({
+          name,
+          plan
+        }))
+    }));
+
+  /*const days = Object.entries(weekplan)
+    .map(([day, rooms]) => ({
+      day,
+      rooms: Object.entries(rooms).map(([name, plan]) => ({name, plan}))
+    }))
+    .filter(({rooms}) => rooms.length > 0);*/
+
+  const calculateWidth = days => 1 / days.map(d => d.rooms.length).reduce((a, b) => a + b, 0) * 100;
+
+  render(table, () => html`
+    <tbody>
+      <tr>
+        ${days.map(day => html`<td>${day.name}</td>`)}
+      </tr>
+      <tr>
+        ${days.flatMap(day => day.rooms).map(room => html`<td>${room.name}</td>`)}
+      </tr>
+    </tbody>
+  `);
+  //${renderRooms(days.flatMap(day => day.rooms), calculateWidth(days))}
+};
 
 const renderAll = () => {
   renderInput();
   renderOutput();
 }
 
-renderAll();
+//renderAll();
+
+const renderDivs = (firstRow, secondRow) => html`
+  <div>
+    ${firstRow.map(x => html`<span class="a">${x}</span>`)}
+  </div>
+  <div>
+    ${secondRow.map(x => html`<span class="b">${x}</span>`)}
+  </div>
+`;
+
+render(document.body, () => renderDivs([], []));
+render(document.body, () => renderDivs([1], ['a']));
+render(document.body, () => renderDivs([1, 2], ['a', 'c']));
