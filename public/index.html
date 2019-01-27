@@ -14,6 +14,7 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
+
     .day {
       text-align: center;
       font-size: 1.25em;
@@ -21,17 +22,18 @@
       border-right: 2px solid #666;
       padding: 1em 0;
     }
+
     .sal {
       font-weight: bold;
       text-align: center;
       border-bottom: 2px solid #666;
     }
 
-    .sal.first {
+    .first {
       border-left: 2px solid #666;
     }
 
-    .sal.last {
+    .last {
       border-right: 2px solid #666;
     }
 
@@ -83,8 +85,20 @@
       background: #cc6699;
       color: white;
     }
+
     .hour {
       border-top: 2px solid #ccc;
+    }
+
+    .time-input input {
+      width: 100px;
+    }
+
+    .remove {
+      color: #aa0000;
+      border: none;
+      background: transparent;
+      cursor: pointer;
     }
   </style>
 </head>

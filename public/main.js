@@ -193,6 +193,7 @@ const agera = action => (...args) => {
     requestAnimationFrame(() => {
       agering = false;
       renderAll();
+      localStorage.setItem('lessonPlan', JSON.stringify(lessons));
     });
   }
 }
@@ -219,14 +220,20 @@ const renderLesson = (lesson, index) => html`
       <option value="Søndag">Søndag</option>
     </select>
     <label>Sal: <input value=${lesson.room} oninput=${agera(e => lesson.room = e.target.value)} /></label>
-    <label>Start: <input type="time" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></label>
-    <label>End: <input type="time" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></label>
-    <span onclick=${agera(() => lessons.splice(index, 1))}>X</span>
+    <label class="time-input">Start: <input type="text" pattern="\d\d:\d\d" placeholder="hh:mm" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></label>
+    <label class="time-input">End: <input type="text" pattern="\d\d:\d\d" placeholder="hh:mm" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></label>
+    <button type="button" onclick=${agera(() => lessons.splice(index, 1))} class="remove">Fjern</button>
   </div>
 `;
 
-const lessons = [];
+const lessons = JSON.parse(localStorage.getItem('lessonPlan') || '[]') || [];
 const hours = [];
+const dayNames = [
+  'Mandag',
+  'Tirsdag',
+  'Onsdag',
+  'Torsdag'
+];
 
 for(var i=19*4; i<19*4+3*4+1; i++){
   hours.push(`${(i/4)|0}:${String((i%4)*15).padStart(2, '0')}`);
@@ -250,36 +257,44 @@ const table = document.querySelector("#ukeplan");
 
 const renderOutput = () => {
 
-  const days = groupBy(lessons, l => l.day)
-    .map(([name, lessons]) => ({
-      name,
-      rooms: groupBy(lessons, l => l.room)
-        .map(([name, plan]) => ({
-          name,
-          plan
-        }))
-    }));
-
-  /*const days = Object.entries(weekplan)
-    .map(([day, rooms]) => ({
-      day,
-      rooms: Object.entries(rooms).map(([name, plan]) => ({name, plan}))
-    }))
-    .filter(({rooms}) => rooms.length > 0);*/
+  const days = dayNames.map(name => ({
+    name,
+    rooms: groupBy(lessons.filter(l => l.day == name), l => l.room)
+      .map(([name, plan]) => ({
+        name,
+        plan
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  })).filter(x => x.rooms.length > 0);
 
   const calculateWidth = days => 1 / days.map(d => d.rooms.length).reduce((a, b) => a + b, 0) * 100;
 
   render(table, () => html`
     <tbody>
-      <tr>
-        ${days.map(day => html`<td>${day.name}</td>`)}
-      </tr>
-      <tr>
-        ${days.flatMap(day => day.rooms).map(room => html`<td>${room.name}</td>`)}
-      </tr>
+      ${renderDays(days)}
+      ${renderRooms(days, calculateWidth(days))}
+      ${hours.map(hour => html`
+        <tr>
+          ${time(hour)}
+          ${days
+            .flatMap(day => day.rooms
+            .map((room, i) => {
+              const lesson = room.plan.find(x => x.start == hour);
+              if(lesson){
+                return html`<td class=${lesson.type} rowspan=${findLength(hours, lesson.start, lesson.end)}>${lesson.name}</td>`;
+              }else if(room.plan.find(x => x.start < hour && x.end > hour)){
+                //do nothing, there is something filling this room
+              }else{
+                return html`<td class=${classes('empty', {'hour': hour.includes(':00'), 'first': i == 0})}>\xa0</td>`;
+              }
+            }))
+            .filter(x => x)
+          }
+          ${time(hour)}
+        </tr>
+      `)}
     </tbody>
   `);
-  //${renderRooms(days.flatMap(day => day.rooms), calculateWidth(days))}
 };
 
 const renderAll = () => {
@@ -287,17 +302,12 @@ const renderAll = () => {
   renderOutput();
 }
 
-//renderAll();
+const findLength = (hours, start, end) => {
+  for(let a = hours.indexOf(start), i=a; i < hours.length; i++){
+    if(hours[i] == end){
+      return i - a;
+    }
+  }
+}
 
-const renderDivs = (firstRow, secondRow) => html`
-  <div>
-    ${firstRow.map(x => html`<span class="a">${x}</span>`)}
-  </div>
-  <div>
-    ${secondRow.map(x => html`<span class="b">${x}</span>`)}
-  </div>
-`;
-
-render(document.body, () => renderDivs([], []));
-render(document.body, () => renderDivs([1], ['a']));
-render(document.body, () => renderDivs([1, 2], ['a', 'c']));
+renderAll();

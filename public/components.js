@@ -1,4 +1,3 @@
-import {$, createComment} from './lib.js';
 import {html} from 'https://unpkg.com/lighterhtml?module'
 
 export const emptyTime = (classes='') => html`<td class=${classes}>\xa0</td>`;
@@ -8,10 +7,10 @@ export const time = hour => hour.includes(':00')
   : html`<td class="time">\xa0</td>`;
 
 
-export const renderRooms = (rooms, width) => html`
+export const renderRooms = (days, width) => html`
   <tr>
     <td class="sal">\xa0</td>
-    ${rooms.map(renderRoom(width))}
+    ${days.flatMap(day => day.rooms.map(renderRoom(width)))}
     <td class="sal">\xa0</td>
   </tr>
 `;
@@ -32,4 +31,4 @@ export const renderDays = days => html`
   </tr>
 `;
 
-export const renderDay = ({ day, rooms }) => html`<td colspan=${rooms.length} class="day">${day}</td>`;
+export const renderDay = ({ name, rooms }) => html`<td colspan=${rooms.length} class="day">${name}</td>`;
