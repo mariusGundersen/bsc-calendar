@@ -1,187 +1,11 @@
-import {$, classes, groupBy} from './lib.js';
+import {classes, groupBy} from './lib.js';
 import {
   time,
-  emptyTime,
   renderDays,
   renderRooms
 } from './components.js';
-import {render, html, svg} from 'https://unpkg.com/lighterhtml?module'
-
-const weekplan = {
-  "Mandag": {
-    "Sal 3": [
-      {
-        title: "Balboa 2",
-        class: "balboa",
-        start: 4,
-        length: 6
-      },
-      {
-        title: "Balboa Sosialdans",
-        class: "balboa",
-        start: 10,
-        length: 2
-      }
-    ],
-    "Sal 5": [
-      {
-        title: "Balboa 1",
-        class: "balboa",
-        start: 4,
-        length: 6
-      },
-
-    ]
-  },
-  "Tirsdag": {
-    "Sal 1": [
-      {
-        title: "Lindy 3",
-        class: "lindy",
-        start: 0,
-        length: 6
-      },
-      {
-        title: "Sosialdans",
-        class: "felles",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 3": [
-      {
-        title: "Balboa egentrening",
-        class: "balboa",
-        start: 0,
-        length: 6
-      },
-      {
-        title: "Sosialdans",
-        class: "felles",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 6": [
-      {
-        title: "Boogie 2",
-        class: "boogie",
-        start: 1,
-        length: 5
-      }
-    ],
-    "Bårdar 2": [
-      {
-        title: "Lindy 2",
-        class: "lindy",
-        start: 0,
-        length: 6
-      }
-    ],
-    "BLS": [
-      {
-        title: "Lindy 1",
-        class: "lindy",
-        start: 0,
-        length: 6
-      },
-      {
-        title: "Sosialdans",
-        class: "felles",
-        start: 6,
-        length: 6
-      }
-    ],
-  },
-  "Onsdag": {
-    "Sal 3": [
-      {
-        title: "Balboa 3",
-        class: "balboa",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 5": [
-      {
-        title: "Jazz 4 / Jazz 2",
-        class: "jazz",
-        start: 0,
-        length: 6
-      },
-      {
-        title: "Shag 1",
-        class: "shag",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 6": [
-      {
-        title: "Åpen egentrening",
-        class: "felles",
-        start: 2,
-        length: 6
-      }
-    ],
-    "Sal 7": [
-      {
-        title: "Blues",
-        class: "blues",
-        start: 0,
-        length: 6
-      }
-    ],
-  },
-  "Torsdag": {
-    "Sal 3": [
-      {
-        title: "Boogie 4",
-        class: "boogie",
-        start: 0,
-        length: 6
-      },
-      {
-        title: "Shag 3",
-        class: "shag",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 5": [
-      {
-        title: "Boogie 3",
-        class: "boogie",
-        start: 2,
-        length: 6
-      }
-    ],
-    "Sal 6": [
-      {
-        title: "Lindy egentrening med instruktør",
-        class: "lindy",
-        start: 6,
-        length: 6
-      }
-    ],
-    "Sal 7": [
-      {
-        title: "Jazz 1",
-        class: "jazz",
-        start: 0,
-        length: 6
-      }
-    ],
-    "Bårdar 2": [
-      {
-        title: "Lindy 4",
-        class: "lindy",
-        start: 0,
-        length: 6
-      }
-    ],
-  }
-};
+import {render, html} from 'https://unpkg.com/lighterhtml?module'
+import plan from './plan.js';
 
 const input = document.querySelector('#input');
 
@@ -220,13 +44,13 @@ const renderLesson = (lesson, index) => html`
       <option value="Søndag">Søndag</option>
     </select>
     <label>Sal: <input value=${lesson.room} oninput=${agera(e => lesson.room = e.target.value)} /></label>
-    <label class="time-input">Start: <input type="text" pattern="\d\d:\d\d" placeholder="hh:mm" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></label>
-    <label class="time-input">End: <input type="text" pattern="\d\d:\d\d" placeholder="hh:mm" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></label>
+    <label class="time-input">Start: <input type="text" pattern="^\\d\\d:\\d\\d$" placeholder="hh:mm" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></label>
+    <label class="time-input">End: <input type="text" pattern="^\\d\\d:\\d\\d$" placeholder="hh:mm" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></label>
     <button type="button" onclick=${agera(() => lessons.splice(index, 1))} class="remove">Fjern</button>
   </div>
 `;
 
-const lessons = JSON.parse(localStorage.getItem('lessonPlan') || '[]') || [];
+const lessons = JSON.parse(localStorage.getItem('lessonPlan') || 'false') || plan;
 const hours = [];
 const dayNames = [
   'Mandag',
