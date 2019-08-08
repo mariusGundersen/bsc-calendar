@@ -23,10 +23,11 @@ const agera = action => (...args) => {
   }
 }
 
-
+const by = (key, dir) => (a, b) => a[key] < b[key] ? dir : a[key] > b[key] ? -dir : 0;
 
 const renderLesson = (lesson, index) => html`
   <tr>
+    <td><input type="checkbox" checked=${lesson.enabled} onchange=${agera(e => lesson.enabled = !lesson.enabled)} /></td>
     <td><input value=${lesson.name} oninput=${agera(e => lesson.name = e.target.value)} /></td>
     <td><select value=${lesson.type} onchange=${agera(e => lesson.type = e.target.value)}>
       <option value="lindy">Lindy</option>
@@ -71,28 +72,41 @@ const addLesson = agera(() => lessons.push({
   end: '20:30'
 }));
 
+let sortKey = 'day';
+let sortDir = -1;
+
 const renderInput = () => render(input, () => html`
-  <table>
+  <table class="input">
     <tr>
-      <th>Navn</th>
-      <th>Type</th>
-      <th>Ukedag</th>
-      <th>Sal</th>
-      <th>Fra</th>
-      <th>Til</th>
+      <th onclick=${setSortKey('enabled')}>Ja?</th>
+      <th onclick=${setSortKey('name')}>Navn</th>
+      <th onclick=${setSortKey('type')}>Type</th>
+      <th onclick=${setSortKey('day')}>Ukedag</th>
+      <th onclick=${setSortKey('room')}>Sal</th>
+      <th onclick=${setSortKey('start')}>Fra</th>
+      <th onclick=${setSortKey('end')}>Til</th>
       <th></th>
     </tr>
-    ${lessons.map(renderLesson)}
+    ${lessons.sort(by(sortKey, sortDir)).map(renderLesson)}
   </table>
   <button onclick=${addLesson}>Legg til ny time</button>
 `);
 
+const setSortKey = key => agera(e => {
+  if (key == sortKey) {
+    sortDir *= -1;
+  } else {
+    sortKey = key
+  }
+});
+
 const weekplanElm = document.querySelector("#ukeplan");
 
 const renderWeekplan = () => {
+  const activeLessons = lessons.filter(l => l.enabled);
   const days = dayNames.map(name => ({
     name,
-    rooms: groupBy(lessons.filter(l => l.day == name), l => l.room)
+    rooms: groupBy(activeLessons.filter(l => l.day == name), l => l.room)
       .map(([name, plan]) => ({
         name,
         plan
@@ -101,7 +115,7 @@ const renderWeekplan = () => {
   })).filter(x => x.rooms.length > 0);
 
   const calculateWidth = days => 1 / days.map(d => d.rooms.length).reduce((a, b) => a + b, 0) * 100;
-  const hours = getHours(lessons.flatMap(l => [l.start, l.end]));
+  const hours = getHours(activeLessons.flatMap(l => [l.start, l.end]));
 
   render(weekplanElm, () => html`
     <tbody>
