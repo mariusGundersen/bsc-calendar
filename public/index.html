@@ -7,6 +7,24 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Timeplan</title>
   <style>
+    html,
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      margin: 0;
+    }
+
+    #input {
+      overflow-y: auto;
+      background: #ddd;
+    }
+
+    #ukeplan-wrapper {
+      padding: 1em;
+      box-sizing: border-box;
+    }
+
     table {
       font-family: Arial, Helvetica, sans-serif;
       border-collapse: collapse;
@@ -117,7 +135,18 @@
 
 <body>
   <div id="input"></div>
-  <table id="ukeplan"></table>
+  <div id="ukeplan-wrapper">
+    <table id="ukeplan"></table>
+  </div>
+
+  <script>
+
+    window.process = {
+      env: {
+        NODE_ENV: 'production'
+      }
+    };
+  </script>
   <script type="module" src="main.js"></script>
 </body>
 

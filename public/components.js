@@ -7,6 +7,54 @@ export const time = hour => hour.includes(':00')
   ? html`<td class="time hour">${hour}</td>`
   : html`<td class="time">\xa0</td>`;
 
+export const selectType = (type, onChange) => html`
+  <select value=${type} onchange=${e => onChange(e.target.value)}>
+    <option value="lindy">Lindy</option>
+    <option value="balboa">Balboa</option>
+    <option value="boogie">Boogie</option>
+    <option value="jazz">Jazz</option>
+    <option value="shag">Shag</option>
+    <option value="blues">Blues</option>
+    <option value="felles">Felles</option>
+  </select>
+`;
+
+export const selectDay = (day, onChange) => html`
+  <select value=${day} onchange=${e => onChange(e.target.value)}>
+    <option value="Mandag">Mandag</option>
+    <option value="Tirsdag">Tirsdag</option>
+    <option value="Onsdag">Onsdag</option>
+    <option value="Torsdag">Torsdag</option>
+    <option value="Fredag">Fredag</option>
+    <option value="Lørdag">Lørdag</option>
+    <option value="Søndag">Søndag</option>
+  </select>
+`;
+
+export const selectTime = (time, onChange) => html`
+  <select value=${time} onchange=${e => onChange(e.target.value)}>
+  <option value="18:00">18:00</option>
+  <option value="18:15">18:15</option>
+  <option value="18:30">18:30</option>
+  <option value="18:45">18:45</option>
+  <option value="19:00">19:00</option>
+  <option value="19:15">19:15</option>
+  <option value="19:30">19:30</option>
+  <option value="19:45">19:45</option>
+  <option value="20:00">20:00</option>
+  <option value="20:15">20:15</option>
+  <option value="20:30">20:30</option>
+  <option value="20:45">20:45</option>
+  <option value="21:00">21:00</option>
+  <option value="21:15">21:15</option>
+  <option value="21:30">21:30</option>
+  <option value="21:45">21:45</option>
+  <option value="22:00">22:00</option>
+  <option value="22:15">22:15</option>
+  <option value="22:30">22:30</option>
+  <option value="22:45">22:45</option>
+  </select>
+`;
 
 export const renderRooms = (days, width) => html`
   <tr>

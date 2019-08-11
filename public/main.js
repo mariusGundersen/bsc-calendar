@@ -1,60 +1,128 @@
-import { groupBy, getHours } from './lib.js';
+import { groupBy, getHours, updateLesson, undoRedo } from './lib.js';
 import {
   time,
+  selectType,
+  selectDay,
+  selectTime,
   renderDays,
   renderRooms,
   renderRow
 } from './components.js';
-import { render, html } from 'https://unpkg.com/lighterhtml?module'
+import { render, html } from 'https://unpkg.com/lighterhtml?module';
+import { createStore, combineReducers } from 'https://unpkg.com/redux@4.0.4/es/redux.js?module';
 import plan from './plan.js';
 
-const input = document.querySelector('#input');
+const inputElm = document.querySelector('#input');
+const weekplanElm = document.querySelector("#ukeplan");
 
-let agering = false;
-const agera = action => (...args) => {
-  action(...args);
-  if (!agering) {
-    agering = true;
-    requestAnimationFrame(() => {
-      agering = false;
-      renderAll();
-      localStorage.setItem('lessonPlan', JSON.stringify(lessons));
-    });
+const action = {
+  updateLesson(lesson, key, value) {
+    return {
+      type: 'updateLesson',
+      lesson,
+      key,
+      value
+    };
+  },
+  removeLesson(lesson) {
+    return {
+      type: 'removeLesson',
+      lesson
+    }
+  },
+  addLesson() {
+    return {
+      type: 'addLesson',
+      lesson: {
+        name: '',
+        type: 'felles',
+        room: 'Sal 1',
+        day: 'Mandag',
+        start: '19:00',
+        end: '20:30'
+      }
+    }
+  },
+  setSortKey(key) {
+    return {
+      type: 'setSortKey',
+      key
+    }
   }
 }
 
+const store = createStore(combineReducers({
+  lessons: undoRedo((lessons = [], action) => {
+    switch (action.type) {
+      case 'updateLesson':
+        return updateLesson(
+          lessons,
+          action);
+      case 'removeLesson':
+        return lessons.filter(lesson => lesson !== action.lesson);
+      case 'addLesson':
+        return [...lessons, action.lesson];
+      case 'init':
+        return action.lessons;
+      default:
+        return lessons;
+    }
+  }),
+  sort: (state = { key: 'name', dir: -1 }, action) => {
+    switch (action.type) {
+      case 'setSortKey':
+        return {
+          key: action.key,
+          dir: state.key === action.key ? -state.dir : state.dir
+        };
+      default:
+        return state;
+    }
+  }
+}));
+
+let rendering = false;
+store.subscribe(() => {
+  if (!rendering) {
+    rendering = true;
+    requestAnimationFrame(() => {
+      rendering = false;
+      const state = store.getState();
+      renderAll(state, store.dispatch);
+      localStorage.setItem('lessonPlan', JSON.stringify(state.lessons.current));
+    });
+  }
+});
+
 const by = (key, dir) => (a, b) => a[key] < b[key] ? dir : a[key] > b[key] ? -dir : 0;
 
-const renderLesson = (lesson, index) => html`
+const renderLesson = (lesson, dispatch) => html`
   <tr>
-    <td><input type="checkbox" checked=${lesson.enabled} onchange=${agera(e => lesson.enabled = !lesson.enabled)} /></td>
-    <td><input value=${lesson.name} oninput=${agera(e => lesson.name = e.target.value)} /></td>
-    <td><select value=${lesson.type} onchange=${agera(e => lesson.type = e.target.value)}>
-      <option value="lindy">Lindy</option>
-      <option value="balboa">Balboa</option>
-      <option value="boogie">Boogie</option>
-      <option value="jazz">Jazz</option>
-      <option value="shag">Shag</option>
-      <option value="blues">Blues</option>
-      <option value="felles">Felles</option>
-    </select></td>
-    <td><select value=${lesson.day} onchange=${agera(e => lesson.day = e.target.value)}>
-      <option value="Mandag">Mandag</option>
-      <option value="Tirsdag">Tirsdag</option>
-      <option value="Onsdag">Onsdag</option>
-      <option value="Torsdag">Torsdag</option>
-      <option value="Fredag">Fredag</option>
-      <option value="Lørdag">Lørdag</option>
-      <option value="Søndag">Søndag</option>
-    </select></td>
-    <td><input value=${lesson.room} oninput=${agera(e => lesson.room = e.target.value)} /></td>
-    <td><input type="text" pattern="^\\d\\d:\\d\\d$" placeholder="hh:mm" value=${lesson.start} oninput=${agera(e => lesson.start = e.target.value)} /></td>
-    <td><input type="text" pattern="^\\d\\d:\\d\\d$" placeholder="hh:mm" value=${lesson.end} oninput=${agera(e => lesson.end = e.target.value)}/></td>
-    <td><button type="button" onclick=${agera(() => lessons.splice(index, 1))} class="remove">Fjern</button></td>
+    <td>
+      <input type="checkbox" checked=${lesson.enabled} onchange=${dispatch(e => action.updateLesson(lesson, 'enabled', e.target.checked))} />
+    </td>
+    <td>
+      <input value=${lesson.name} oninput=${dispatch(e => action.updateLesson(lesson, 'name', e.target.value))} />
+    </td>
+    <td>
+      ${selectType(lesson.type, dispatch(type => action.updateLesson(lesson, 'type', type)))}
+    </td>
+    <td>
+      ${selectDay(lesson.day, dispatch(day => action.updateLesson(lesson, 'day', day)))}
+    </td>
+    <td>
+      <input value=${lesson.room} oninput=${dispatch(e => action.updateLesson(lesson, 'room', e.target.value))} />
+    </td>
+    <td>
+      ${selectTime(lesson.start, dispatch(time => action.updateLesson(lesson, 'start', time)))}
+    </td>
+    <td>
+      ${selectTime(lesson.end, dispatch(time => action.updateLesson(lesson, 'end', time)))}
+    </td>
+    <td><button type="button" onclick=${dispatch(() => action.removeLesson(lesson))} class="remove">Fjern</button></td>
   </tr>
 `;
 
-const lessons = JSON.parse(localStorage.getItem('lessonPlan') || 'false') || plan;
 const dayNames = [
   'Mandag',
   'Tirsdag',
@@ -62,48 +130,32 @@ const dayNames = [
   'Torsdag'
 ];
 
-
-const addLesson = agera(() => lessons.push({
-  name: '',
-  type: 'felles',
-  room: 'Sal 1',
-  day: 'Mandag',
-  start: '19:00',
-  end: '20:30'
-}));
-
-let sortKey = 'day';
-let sortDir = -1;
-
-const renderInput = () => render(input, () => html`
+const renderInput = (lessons, sort, dispatch) => html`
   <table class="input">
     <tr>
-      <th onclick=${setSortKey('enabled')}>Ja?</th>
-      <th onclick=${setSortKey('name')}>Navn</th>
-      <th onclick=${setSortKey('type')}>Type</th>
-      <th onclick=${setSortKey('day')}>Ukedag</th>
-      <th onclick=${setSortKey('room')}>Sal</th>
-      <th onclick=${setSortKey('start')}>Fra</th>
-      <th onclick=${setSortKey('end')}>Til</th>
+      <th onclick=${dispatch(() => action.setSortKey('enabled'))}>Ja?</th>
+      <th onclick=${dispatch(() => action.setSortKey('name'))}>Navn</th>
+      <th onclick=${dispatch(() => action.setSortKey('type'))}>Type</th>
+      <th onclick=${dispatch(() => action.setSortKey('day'))}>Ukedag</th>
+      <th onclick=${dispatch(() => action.setSortKey('room'))}>Sal</th>
+      <th onclick=${dispatch(() => action.setSortKey('start'))}>Fra</th>
+      <th onclick=${dispatch(() => action.setSortKey('end'))}>Til</th>
       <th></th>
     </tr>
-    ${lessons.sort(by(sortKey, sortDir)).map(renderLesson)}
+    ${lessons.current.sort(by(sort.key, sort.dir)).map(lesson => renderLesson(lesson, dispatch))}
   </table>
-  <button onclick=${addLesson}>Legg til ny time</button>
-`);
+  <button onclick=${dispatch(() => action.addLesson())}>Legg til ny time</button>
+  <button onclick=${dispatch(() => ({ type: 'undo' }))} disabled=${!lessons.canUndo}>Undo</button>
+  <button onclick=${dispatch(() => ({ type: 'redo' }))} disabled=${!lessons.canRedo}>Redo</button>
+`;
 
-const setSortKey = key => agera(e => {
-  if (key == sortKey) {
-    sortDir *= -1;
-  } else {
-    sortKey = key
-  }
-});
-
-const weekplanElm = document.querySelector("#ukeplan");
-
-const renderWeekplan = () => {
+const renderWeekplan = lessons => {
   const activeLessons = lessons.filter(l => l.enabled);
+
+  if (activeLessons.length == 0) {
+    return html``;
+  }
+
   const days = dayNames.map(name => ({
     name,
     rooms: groupBy(activeLessons.filter(l => l.day == name), l => l.room)
@@ -117,7 +169,7 @@ const renderWeekplan = () => {
   const calculateWidth = days => 1 / days.map(d => d.rooms.length).reduce((a, b) => a + b, 0) * 100;
   const hours = getHours(activeLessons.flatMap(l => [l.start, l.end]));
 
-  render(weekplanElm, () => html`
+  return html`
     <tbody>
       ${renderDays(days)}
       ${renderRooms(days, calculateWidth(days))}
@@ -129,13 +181,12 @@ const renderWeekplan = () => {
         </tr>
       `)}
     </tbody>
-  `);
+  `;
 };
 
-const renderAll = () => {
-  renderInput();
-  renderWeekplan();
+const renderAll = (state, dispatch) => {
+  render(inputElm, () => renderInput(state.lessons, state.sort, action => e => dispatch(action(e))));
+  render(weekplanElm, () => renderWeekplan(state.lessons.current));
 }
 
-
-renderAll();
+store.dispatch({ type: 'init', lessons: JSON.parse(localStorage.getItem('lessonPlan') || 'false') || plan });

@@ -42,3 +42,57 @@ export function getHours(times) {
 
   return hours;
 }
+
+export function updateLesson(lessons, action) {
+  return lessons.map(lesson => lesson === action.lesson
+    ? ({
+      ...lesson,
+      [action.key]: action.value
+    })
+    : lesson);
+}
+
+export function undoRedo(reducer, historyLength = 20) {
+  return (state = { history: [], index: 0, canUndo: false, canUndo: false }, action) => {
+    switch (action.type) {
+      case 'undo':
+        if (state.canUndo) {
+          return {
+            current: state.history[state.index + 1],
+            history: state.history,
+            index: state.index + 1,
+            canUndo: state.index + 2 < state.history.length,
+            canRedo: true,
+          };
+        } else {
+          return state;
+        }
+      case 'redo':
+        if (state.canRedo) {
+          return {
+            current: state.history[state.index - 1],
+            history: state.history,
+            index: state.index - 1,
+            canUndo: true,
+            canRedo: state.index - 1 > 0
+          };
+        } else {
+          return state;
+        }
+      default:
+        const current = reducer(state.current, action);
+
+        if (current === state.current) {
+          return state;
+        }
+
+        return {
+          current,
+          history: [current, ...state.history.filter((_, i) => i >= state.index && i < historyLength)],
+          index: 0,
+          canUndo: true,
+          canRedo: false
+        };
+    }
+  }
+}
